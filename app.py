@@ -22,3 +22,9 @@ def mongodb():
     mongo = PyMongo(app, uri=os.getenv('MONGO_URI'))
     name = mongo.db.name
     return 'currnet db name is: ' + json.dumps(name)
+
+
+@app.route('/logs')
+def logs():
+    print('---- /logs called ----')
+    return 'log printed.'

@@ -1,4 +1,10 @@
 {
   "platform": "flask",
-  "app": "flask-starter"
+  "app": "flask-starter",
+  "disks": [
+    {
+      "name": "disk1",
+      "mountTo": "files"
+    }
+  ]
 }
