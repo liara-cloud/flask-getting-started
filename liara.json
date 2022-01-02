@@ -1,0 +1,9 @@
+{
+  "platform": "flask",
+  "disks": [
+    {
+      "name": "disk",
+      "mountTo": "uploads"
+    }
+  ]
+}
