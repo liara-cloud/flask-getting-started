@@ -1,0 +1,6 @@
+{
+  "platform": "flask",
+  "flask": {
+    "pythonVersion": "3.9"
+  }
+}
