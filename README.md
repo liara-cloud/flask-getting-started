@@ -17,7 +17,8 @@ $ liara deploy
 
 1.  [Adding liara.json file](https://github.com/liara-cloud/flask-getting-started/tree/liaraJson)
 2.  [Disk setup](https://github.com/liara-cloud/flask-getting-started/tree/diskSetup)
-
+3.  [Object Storage In Liara](https://github.com/liara-cloud/flask-getting-started/tree/object-storage)
+4.  [Email Server In Liara](https://github.com/liara-cloud/flask-getting-started/tree/email-server)
 
 ## Documentation
 Read more on liara [Flask apps documentation](https://docs.liara.ir/app-deploy/flask/getting-started)
