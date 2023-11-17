@@ -1,0 +1,30 @@
+{% extends 'header.html' %}
+
+{% block content %}
+    <article>
+        <h2>Register</h2>
+        <form action="/register" method="post">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required autocomplete="off">
+            </div>
+
+            <button type="submit" class="btn">Register</button>
+        </form>
+    </article>
+{% endblock %}

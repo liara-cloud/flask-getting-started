@@ -1,0 +1,57 @@
+{% extends 'header_in.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .post {
+            background-color: #fff;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #007bff;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recent Posts</h1>
+    {% for post in posts %}
+        <div class="post">
+            <h2>{{ post[1] }}</h2>
+            <p>{{ post[2] }}</p>
+            {% if post[4] %}
+                <img src="{{ url_for('uploaded_file', filename=post[4]) }}" alt="Post Image">
+            {% endif %}
+            <p>Published at {{ post[5] }}</p>
+        </div>
+    {% endfor %}
+</body>
+</html>
+
+{% endblock %}
