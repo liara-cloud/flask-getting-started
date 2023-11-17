@@ -20,6 +20,9 @@
 - or if you're using windows, just rename .env.example to .env
 - configure your environment variables
 ```bash
+   mkdir uploads
+```
+```bash
    python -m venv .venv
 ```
 - if you're using Linux, run:
