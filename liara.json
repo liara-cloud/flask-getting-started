@@ -1,0 +1,12 @@
+{
+    "disks":[
+        {
+            "name": "data",
+            "mountTo": "uploads/"
+        }
+    ],
+    "app": "flask-blog",
+    "build":{
+        "location": "germany"
+    }
+}
