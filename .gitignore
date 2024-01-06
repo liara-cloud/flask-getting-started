@@ -1,3 +1,12 @@
 .venv/
 .env
-
+.idea/
+.vscode/
+__pycache__/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+docs/_build/
+dist/
+venv/
