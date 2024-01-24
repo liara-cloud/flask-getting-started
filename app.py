@@ -1,48 +1,46 @@
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory
 import os
-from flask import Flask, flash, request, redirect, url_for, render_template, send_file
-from werkzeug.utils import secure_filename
-
-
-UPLOAD_FOLDER = './uploads'
-
+from datetime import datetime
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.add_url_rule(
-    "/uploads/<name>", endpoint="download_file", build_only=True
-)
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-@app.route("/")
+def get_uploaded_files():
+    return sorted(os.listdir(app.config['UPLOAD_FOLDER']), reverse=True)
+
+@app.route('/')
 def index():
-    return render_template('index.html')
+    uploaded_files = get_uploaded_files()
+    return render_template('index.html', uploaded_files=uploaded_files)
 
-
-@app.route('/upload')
-def upload_index():
-    path = os.getcwd()+"/uploads"
-    files = []
-    for filename in os.listdir(path):
-        files.append(filename)
-    return render_template('upload.html', files=files)
-
-
-@app.route('/uploader', methods=['GET', 'POST'])
+@app.route('/', methods=['POST'])
 def upload_file():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(url_for('upload_index'))
+    if 'file' not in request.files:
+        return render_template('index.html', error='No file part')
 
+    file = request.files['file']
 
-@app.route('/uploads/<name>')
-def download_file(name):
-    path = os.getcwd() + '/uploads/' + name
-    return send_file(path, as_attachment=True)
+    if file.filename == '':
+        return render_template('index.html', error='No selected file')
+
+    if file and allowed_file(file.filename):
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = os.path.join(app.config['UPLOAD_FOLDER'], f"{timestamp}_{file.filename}")
+        file.save(filename)
+        file_link = url_for('uploaded_file', filename=os.path.basename(filename))
+        success_message = 'File successfully uploaded'
+        uploaded_files = get_uploaded_files()
+        return render_template('index.html', success=success_message, filename=os.path.basename(filename), file_link=file_link, uploaded_files=uploaded_files)
+    else:
+        return render_template('index.html', error='Invalid file format')
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+if __name__ == '__main__':
+    app.run(debug=True)

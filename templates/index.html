@@ -1,22 +1,56 @@
+<!doctype html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="{{ url_for('static', filename = 'welcome.css') }}" rel="stylesheet">
-  <title>Deployed to Liara</title>
+    <meta charset="utf-8">
+    <title>Image Uploader</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
-  <h1>
-    Hooray!
-  </h1>
+    <div class="container">
+        <h1 class="mb-4">Image Uploader</h1>
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+        {% if success %}
+            <div class="alert alert-success" role="alert">
+                {{ success }}
+                <br>
+                Image Link: <a href="{{ file_link }}" target="_blank">{{ file_link }}</a>
+                <br>
+                <small>Upload another image:</small>
+            </div>
+        {% endif %}
+        <form action="/" method="post" enctype="multipart/form-data" id="uploadForm">
+            <div class="custom-file">
+                <input type="file" class="custom-file-input" id="customFile" name="file" accept=".png, .jpg, .jpeg, .gif" onchange="updateFileName()">
+                <label class="custom-file-label" for="customFile" id="fileLabel">Choose file</label>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3" id="uploadBtn" disabled>Upload</button>
+        </form>
 
-  <canvas id="drawing_canvas"></canvas>
-
-  <script src="{{ url_for('static', filename = 'welcome.js') }}"></script>
-
+        {% if uploaded_files %}
+            <div class="uploaded-files">
+                <h2>Uploaded Files</h2>
+                <ul class="list-group">
+                    {% for uploaded_file in uploaded_files %}
+                        <li class="list-group-item"><a href="{{ url_for('uploaded_file', filename=uploaded_file) }}" target="_blank">{{ uploaded_file }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function updateFileName() {
+            var fileName = $('#customFile').val().split('\\').pop();
+            $('#fileLabel').text(fileName);
+            $('#uploadBtn').prop('disabled', false);
+        }
+    </script>
 </body>
-
 </html>
