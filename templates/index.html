@@ -36,7 +36,9 @@
                 <h2>Uploaded Files</h2>
                 <ul class="list-group">
                     {% for uploaded_file in uploaded_files %}
+                        {% if uploaded_file != '.gitignore' %}
                         <li class="list-group-item"><a href="{{ url_for('uploaded_file', filename=uploaded_file) }}" target="_blank">{{ uploaded_file }}</a></li>
+                        {% endif %}
                     {% endfor %}
                 </ul>
             </div>
