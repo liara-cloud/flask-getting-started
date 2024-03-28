@@ -1,0 +1,14 @@
+{
+    "disks":[
+        {
+            "name": "",
+            "mountTo": "uploads"
+        }
+    ],
+    "build": {
+        "location": "germany"
+     },
+     "flask": {
+        "pythonVersion": "3.11"
+      }
+}
