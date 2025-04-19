@@ -1,116 +1,113 @@
-import os
+from flask import Flask, render_template, request, flash
 import boto3
-from dotenv import load_dotenv
-from flask import Flask, request
-from botocore.exceptions import NoCredentialsError
-from urllib.parse import quote
-
-load_dotenv()
-
-LIARA_ENDPOINT = os.getenv("LIARA_ENDPOINT")
-LIARA_ACCESS_KEY = os.getenv("LIARA_ACCESS_KEY")
-LIARA_SECRET_KEY = os.getenv("LIARA_SECRET_KEY")
-LIARA_BUCKET_NAME = os.getenv("LIARA_BUCKET_NAME")
-
-s3 = boto3.client(
-    "s3",
-    endpoint_url=LIARA_ENDPOINT,
-    aws_access_key_id=LIARA_ACCESS_KEY,
-    aws_secret_access_key=LIARA_SECRET_KEY,
-)
+from botocore.exceptions import NoCredentialsError, ClientError
+import os
 
 app = Flask(__name__)
+app.secret_key = "your_secret_key_here"
 
+# Load environment variables
+LIARA_ENDPOINT_URL = os.getenv("LIARA_ENDPOINT_URL")
+LIARA_ACCESS_KEY   = os.getenv("LIARA_ACCESS_KEY")
+LIARA_SECRET_KEY   = os.getenv("LIARA_SECRET_KEY")
+BUCKET_NAME        = os.getenv("BUCKET_NAME")
 
-@app.route("/")
-def index():
-    urls = {"urls": list()}
-    for url in app.url_map.iter_rules():
-        if '/static/' not in str(url):
-            urls["urls"].append(str(url))
-    return {"api": "running", **urls}
+# Initialize S3 client
+s3_client = boto3.client(
+    "s3",
+    endpoint_url=LIARA_ENDPOINT_URL,
+    aws_access_key_id=LIARA_ACCESS_KEY,
+    aws_secret_access_key=LIARA_SECRET_KEY
+)
 
-
-@app.route("/upload", methods=["POST"])
-def upload_file():
-    response = {"message": ""}
-    file = request.files["file"]
-    if file:
-        try:
-            s3.upload_fileobj(file, LIARA_BUCKET_NAME, file.filename)
-            response["message"] = "File uploaded."
-        except NoCredentialsError:
-            response["message"] = "Liara credentials not found."
-        except Exception as e:
-            response["message"] = str(e)
-        finally:
-            return response
-    else:
-        response["message"] = "No file selected."
-
-
-@app.route("/download/<filename>")
-def download_file(filename):
-    response = {"message": ""}
+# Controller: List all buckets
+def list_buckets():
     try:
-        s3.download_file(LIARA_BUCKET_NAME, filename, filename)
-        response["message"] = "File downloaded."
+        response = s3_client.list_buckets()
+        return [bucket['Name'] for bucket in response.get('Buckets', [])]
     except NoCredentialsError:
-        response["message"] = "Liara credentials not found."
-    except Exception as e:
-        response["message"] = str(e)
-    finally:
-        return response
+        flash("Credentials not available.", "error")
+        return []
+    except ClientError as e:
+        flash(f"Error listing buckets: {e}", "error")
+        return []
 
-
-@app.route("/list")
-def list_files():
-    response = {"message": list()}
+# Controller: List all files in a bucket
+def list_files(bucket_name):
     try:
-        files = s3.list_objects(Bucket=LIARA_BUCKET_NAME)
-        for file in files["Contents"]:
-            response["message"].append(file["Key"])
-    except NoCredentialsError:
-        response["message"] = "Liara credentials not found."
-    except Exception as e:
-        response["message"] = str(e)
-    finally:
-        return response
+        response = s3_client.list_objects_v2(Bucket=bucket_name)
+        return [obj['Key'] for obj in response.get('Contents', [])]
+    except ClientError as e:
+        flash(f"Error listing files: {e}", "error")
+        return []
 
-
-@app.route("/presigned-url/<filename>")
-def get_presigned_url(filename):
-    response = {"message": ""}
+# Controller: Upload a file
+def upload_file(file, bucket_name):
     try:
-        pre_signed_url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": LIARA_BUCKET_NAME, "Key": filename},
-            ExpiresIn=12 * 60 * 60,  # 12 hours
+        s3_client.upload_fileobj(file, bucket_name, file.filename)
+        flash(f"File '{file.filename}' uploaded successfully.", "success")
+    except ClientError as e:
+        flash(f"Error uploading file: {e}", "error")
+
+# Controller: Delete a file
+def delete_file(bucket_name, file_name):
+    try:
+        s3_client.delete_object(Bucket=bucket_name, Key=file_name)
+        flash(f"File '{file_name}' deleted successfully.", "success")
+    except ClientError as e:
+        flash(f"Error deleting file: {e}", "error")
+
+# Controller: Generate a pre-signed URL
+def generate_presigned_url(bucket_name, file_name, expiration=3600):
+    try:
+        url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': file_name},
+            ExpiresIn=expiration
         )
-        response["message"] = pre_signed_url
-    except NoCredentialsError:
-        response["message"] = "Liara credentials not found."
-    except Exception as e:
-        response["message"] = str(e)
-    finally:
-        return response
+        return url
+    except ClientError as e:
+        flash(f"Error generating pre-signed URL: {e}", "error")
+        return None
 
+# Controller: Generate a permanent URL
+def generate_permanent_url(bucket_name, file_name):
+    return f"{LIARA_ENDPOINT_URL}/{bucket_name}/{file_name}"
 
-@app.route("/permanent-url/<filename>")
-def get_permanent_url(filename):
-    # bucket should be public
-    response = {"message": ""}
-    try:
-        filename_encoded = quote(filename)
-        permanent_url = f"https://{LIARA_BUCKET_NAME}.{LIARA_ENDPOINT.replace('https://', '')}/{filename_encoded}"
-        response["message"] = permanent_url
-    except NoCredentialsError:
-        response["message"] = "Liara credentials not found."
-    except Exception as e:
-        response["message"] = str(e)
-    finally:
-        return response
+# Main route
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        # Handle file upload
+        if "file" in request.files:
+            file = request.files["file"]
+            if file.filename:
+                upload_file(file, BUCKET_NAME)
 
+        # Handle file deletion
+        file_to_delete = request.form.get("delete_file")
+        if file_to_delete:
+            delete_file(BUCKET_NAME, file_to_delete)
 
+    # Fetch bucket names and files
+    buckets = list_buckets()
+    files = list_files(BUCKET_NAME)
+
+    # Generate pre-signed URLs and permanent URLs for each file
+    presigned_urls = {}
+    permanent_urls = {}
+    for file in files:
+        presigned_urls[file] = generate_presigned_url(BUCKET_NAME, file)
+        permanent_urls[file] = generate_permanent_url(BUCKET_NAME, file)
+
+    return render_template(
+        "index.html",
+        buckets=buckets,
+        files=files,
+        presigned_urls=presigned_urls,
+        permanent_urls=permanent_urls
+    )
+
+# Run the app
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

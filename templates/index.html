@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S3 File Manager</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Buttons and Links */
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #fff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .file-actions a {
+            margin-right: 10px;
+        }
+
+        /* File List */
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-name {
+            font-weight: bold;
+            color: #34495e;
+        }
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Upload Form */
+        .upload-form {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .upload-form input[type="file"] {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Messages */
+        .message {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #fff;
+        }
+        .success {
+            background-color: #2ecc71;
+        }
+        .error {
+            background-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>S3 File Manager</h1>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Bucket Information -->
+        <h2>Buckets</h2>
+        <ul>
+            {% for bucket in buckets %}
+                <li>{{ bucket }}</li>
+            {% endfor %}
+        </ul>
+
+        <!-- File Management -->
+        <h2>Files in Bucket: {{ BUCKET_NAME }}</h2>
+        <form method="POST" enctype="multipart/form-data" class="upload-form">
+            <input type="file" name="file" required>
+            <button type="submit" class="btn">Upload File</button>
+        </form>
+
+        <h3>File List</h3>
+        <div class="file-list">
+            {% if files %}
+                {% for file in files %}
+                    <div class="file-item">
+                        <span class="file-name">{{ file }}</span>
+                        <div class="file-actions">
+                            <a href="{{ permanent_urls[file] }}" target="_blank" class="btn">Permanent Link</a>
+                            <a href="{{ presigned_urls[file] }}" target="_blank" class="btn">Pre-signed Link</a>
+                            <form method="POST" style="display: inline;">
+                                <input type="hidden" name="delete_file" value="{{ file }}">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No files found in the bucket.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
